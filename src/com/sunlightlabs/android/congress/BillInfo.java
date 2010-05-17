@@ -32,6 +32,8 @@ import com.sunlightlabs.android.congress.utils.ViewArrayAdapter;
 import com.sunlightlabs.congress.java.Bill;
 import com.sunlightlabs.congress.java.CongressException;
 import com.sunlightlabs.congress.java.Legislator;
+import com.sunlightlabs.congress.java.service.ApplicationFacade;
+import com.sunlightlabs.congress.java.service.BillService;
 
 public class BillInfo extends ListActivity implements LoadsPhoto {
 	private String id;
@@ -57,6 +59,8 @@ public class BillInfo extends ListActivity implements LoadsPhoto {
 	
 	private SimpleDateFormat timelineFormat = new SimpleDateFormat("MMM dd, yyyy");
 	
+	private BillService billService = ApplicationFacade.defaultBillService;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -69,6 +73,12 @@ public class BillInfo extends ListActivity implements LoadsPhoto {
 		id = extras.getString("id");
 		extra = extras.getBoolean("extra", false);
 		
+		if (extras.containsKey("billService")) {
+			Object service = extras.get("billService");
+			if (service instanceof BillService)
+				billService = (BillService) service;
+		}
+
 		setupControls();
 		
 		BillInfoHolder holder = (BillInfoHolder) getLastNonConfigurationInstance();
@@ -421,7 +431,7 @@ public class BillInfo extends ListActivity implements LoadsPhoto {
 		@Override
 		public Bill doInBackground(String... billId) {
 			try {
-				Bill bill = Bill.find(billId[0], "basic,sponsor,summary");
+				Bill bill = billService.find(billId[0], "basic,sponsor,summary");
 				
 				return bill;
 			} catch (CongressException exception) {

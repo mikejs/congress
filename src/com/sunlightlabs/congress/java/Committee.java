@@ -6,12 +6,21 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.sunlightlabs.congress.java.service.ApplicationFacade;
+import com.sunlightlabs.congress.java.service.LegislatorService;
+
 
 public class Committee implements Comparable<Committee> {
 
 	public String id, name, chamber;
 	public ArrayList<Legislator> members;
 	
+	private LegislatorService legislatorService = ApplicationFacade.defaultLegislatorService;
+
+	public void setLegislatorService(LegislatorService service) {
+		legislatorService = service;
+	}
+
 	public static ArrayList<Committee> forLegislator(String bioguide_id) throws CongressException {
 		return committeesFor(Sunlight.url("committees.allForLegislator", "bioguide_id=" + bioguide_id));
 	}
@@ -20,7 +29,7 @@ public class Committee implements Comparable<Committee> {
 		return committeeFor(Sunlight.url("committees.get", "id=" + id));
 	}
 	
-	public Committee(JSONObject json) throws JSONException {
+	public Committee(JSONObject json) throws JSONException, CongressException {
 		id = json.getString("id");
 		name = json.getString("name");
 		chamber = json.getString("chamber");
@@ -29,7 +38,8 @@ public class Committee implements Comparable<Committee> {
 			members = new ArrayList<Legislator>();
 			JSONArray memberList = json.getJSONArray("members");
 			for (int i=0; i<memberList.length(); i++)
-				members.add(Legislator.fromSunlight(memberList.getJSONObject(i).getJSONObject("legislator")));
+				members.add(legislatorService.newLegislator(memberList.getJSONObject(i)
+						.getJSONObject("legislator")));
 		}
 	}
 	

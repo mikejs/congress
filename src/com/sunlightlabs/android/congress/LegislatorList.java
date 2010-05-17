@@ -32,6 +32,8 @@ import com.sunlightlabs.android.congress.utils.Utils;
 import com.sunlightlabs.congress.java.Committee;
 import com.sunlightlabs.congress.java.CongressException;
 import com.sunlightlabs.congress.java.Legislator;
+import com.sunlightlabs.congress.java.service.ApplicationFacade;
+import com.sunlightlabs.congress.java.service.LegislatorService;
 
 public class LegislatorList extends ListActivity implements LoadsPhoto {
 	private final static int SEARCH_ZIP = 0;
@@ -52,6 +54,8 @@ public class LegislatorList extends ListActivity implements LoadsPhoto {
 	private double latitude = -1;
 	private double longitude = -1;
 
+	private LegislatorService legislatorService = ApplicationFacade.defaultLegislatorService;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -70,6 +74,12 @@ public class LegislatorList extends ListActivity implements LoadsPhoto {
 		committeeName = extras.getString("committeeName");
 
 		shortcut = extras.getBoolean("shortcut", false);
+
+		if (extras.containsKey("legislatorService")) {
+			Object service = extras.get("legislatorService");
+			if (service instanceof LegislatorService)
+				legislatorService = (LegislatorService) service;
+		}
 
 		setupControls();
 
@@ -376,19 +386,19 @@ public class LegislatorList extends ListActivity implements LoadsPhoto {
 			try {
 				switch (searchType()) {
 				case SEARCH_ZIP:
-					temp = Legislator.allForZipCode(zipCode);
+					temp = legislatorService.allForZipCode(zipCode);
 					break;
 				case SEARCH_LOCATION:
-					temp = Legislator.allForLatLong(latitude, longitude);
+					temp = legislatorService.allForLatLong(latitude, longitude);
 					break;
 				case SEARCH_LASTNAME:
-					temp = Legislator.allWhere("lastname__istartswith", lastName);
+					temp = legislatorService.allWhere("lastname__istartswith", lastName);
 					break;
 				case SEARCH_COMMITTEE:
 					temp = Committee.find(committeeId).members;
 					break;
 				case SEARCH_STATE:
-					temp = Legislator.allWhere("state", state);
+					temp = legislatorService.allWhere("state", state);
 					break;
 				default:
 					return legislators;

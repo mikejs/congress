@@ -1,15 +1,8 @@
 package com.sunlightlabs.congress.java;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.http.impl.cookie.DateParseException;
-import org.apache.http.impl.cookie.DateUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class Bill {
 	
@@ -33,153 +26,8 @@ public class Bill {
 	public String summary;
 	
 	// votes
-	public String last_vote_result;
-	public String last_vote_chamber;
-	
-	public Bill(JSONObject json) throws JSONException, DateParseException {
-		if (!json.isNull("bill_id"))
-			id = json.getString("bill_id");
-		if (!json.isNull("code"))
-			code = json.getString("code");
-		if (!json.isNull("type"))
-			type = json.getString("type");
-		if (!json.isNull("state"))
-			state = json.getString("state");
-		if (!json.isNull("chamber"))
-			chamber = json.getString("chamber");
-		if (!json.isNull("session"))
-			session = json.getInt("session");
-		if (!json.isNull("number"))
-			number = json.getInt("number");
-		
-		
-		if (!json.isNull("short_title"))
-			short_title = json.getString("short_title");
-		if (!json.isNull("official_title"))
-			official_title = json.getString("official_title");
-		if (!json.isNull("last_action_at"))
-			last_action_at = DateUtils.parseDate(json.getString("last_action_at"), Drumbone.dateFormat);
-		if (!json.isNull("last_vote_at"))
-			last_vote_at = DateUtils.parseDate(json.getString("last_vote_at"), Drumbone.dateFormat);
-		
-		// timeline dates
-		if (!json.isNull("introduced_at"))
-			introduced_at =  DateUtils.parseDate(json.getString("introduced_at"), Drumbone.dateFormat);
-		if (!json.isNull("house_result_at"))
-			house_result_at = DateUtils.parseDate(json.getString("house_result_at"), Drumbone.dateFormat);
-		if (!json.isNull("senate_result_at"))
-			senate_result_at = DateUtils.parseDate(json.getString("senate_result_at"), Drumbone.dateFormat);
-		if (!json.isNull("passed_at"))
-			passed_at =  DateUtils.parseDate(json.getString("passed_at"), Drumbone.dateFormat);
-		if (!json.isNull("vetoed_at"))
-			vetoed_at =  DateUtils.parseDate(json.getString("vetoed_at"), Drumbone.dateFormat);
-		if (!json.isNull("override_house_result_at"))
-			override_house_result_at = DateUtils.parseDate(json.getString("override_house_result_at"), Drumbone.dateFormat);
-		if (!json.isNull("override_senate_result_at"))
-			override_senate_result_at = DateUtils.parseDate(json.getString("override_senate_result_at"), Drumbone.dateFormat);
-		if (!json.isNull("awaiting_signature_since"))
-			awaiting_signature_since =  DateUtils.parseDate(json.getString("awaiting_signature_since"), Drumbone.dateFormat);
-		if (!json.isNull("enacted_at"))
-			enacted_at = DateUtils.parseDate(json.getString("enacted_at"), Drumbone.dateFormat);
-		
-		// timeline flags and values
-		if (!json.isNull("house_result"))
-			house_result = json.getString("house_result");
-		if (!json.isNull("senate_result"))
-			senate_result = json.getString("senate_result");
-		if (!json.isNull("passed"))
-			passed = json.getBoolean("passed");
-		if (!json.isNull("vetoed"))
-			vetoed = json.getBoolean("vetoed");
-		if (!json.isNull("override_house_result"))
-			override_house_result = json.getString("override_house_result");
-		if (!json.isNull("override_senate_result"))
-			override_senate_result = json.getString("override_senate_result");
-		if (!json.isNull("awaiting_signature"))
-			awaiting_signature = json.getBoolean("awaiting_signature");
-		if (!json.isNull("enacted"))
-			enacted = json.getBoolean("enacted");
-		
-		if (!json.isNull("sponsor"))
-			sponsor = Legislator.fromDrumbone(json.getJSONObject("sponsor"));
-		
-		if (!json.isNull("summary"))
-			summary = json.getString("summary");
-		
-		if(!json.isNull("votes")) {
-			JSONArray votes = json.getJSONArray("votes");
-			int length = votes.length();
-			
-			for(int i = 0; i < length; i++) {
-				JSONObject vote = votes.getJSONObject(i);
+	public String last_vote_result, last_vote_chamber;
 				
-				// find the last vote (same date and year as the 'last_vote_at')
-				if(DateUtils.parseDate(vote.getString("voted_at"), Drumbone.dateFormat).equals(last_vote_at)) { 					
-					last_vote_chamber = vote.getString("chamber");
-					last_vote_result = vote.getString("result");
-					break;
-				}
-			}
-		}
-	}
-		
-	public static ArrayList<Bill> recentlyIntroduced(int n, int p)
-			throws CongressException {
-		return billsFor(Drumbone.url("bills",
-				"order=introduced_at&sections=basic,sponsor&per_page=" + n + "&page=" + p));
-	}
-	
-	public static ArrayList<Bill> recentLaws(int n, int p) throws CongressException {
-		return billsFor(Drumbone
-				.url("bills", "order=enacted_at&enacted=true&sections=basic,sponsor&per_page=" + n
-						+ "&page=" + p));
-	}
-	
-	public static ArrayList<Bill> recentlySponsored(int n, String sponsor_id, int p)
-			throws CongressException {
-		return billsFor(Drumbone.url("bills", "order=introduced_at&sponsor_id=" + sponsor_id
-				+ "&sections=basic,sponsor&per_page=" + n + "&page=" + p));
-	}
-	
-	public static ArrayList<Bill> latestVotes(int n, int p) throws CongressException {
-		return billsFor(Drumbone.url("bills",
-				"order=last_vote_at&sections=basic,sponsor,votes&per_page=" + n + "&page=" + p));
-	}
-	
-	public static Bill find(String id, String sections) throws CongressException {
-		return billFor(Drumbone.url("bill", "bill_id=" + id + "&sections=" + sections));
-	}
-	
-	public static Bill billFor(String url) throws CongressException {
-		String rawJSON = Drumbone.fetchJSON(url);
-		try {
-			return new Bill(new JSONObject(rawJSON).getJSONObject("bill"));
-		} catch(JSONException e) {
-			throw new CongressException(e, "Problem parsing the JSON from " + url);
-		} catch(DateParseException e) {
-			throw new CongressException(e, "Problem parsing a date from the JSON from " + url);
-		}
-	}
-	
-	public static ArrayList<Bill> billsFor(String url) throws CongressException {
-		String rawJSON = Drumbone.fetchJSON(url);
-		ArrayList<Bill> bills = new ArrayList<Bill>();
-		try {
-			JSONArray results = new JSONObject(rawJSON).getJSONArray("bills");
-			
-			int length = results.length();
-			for (int i = 0; i<length; i++)
-				bills.add(new Bill(results.getJSONObject(i)));
-				
-		} catch(JSONException e) {
-			throw new CongressException(e, "Problem parsing the JSON from " + url);
-		} catch(DateParseException e) {
-			throw new CongressException(e, "Problem parsing a date from the JSON from " + url);
-		}
-		
-		return bills;
-	}
-			
 	public static String formatCode(String code) {
 		Pattern pattern = Pattern.compile("^([a-z]+)(\\d+)$");
 		Matcher matcher = pattern.matcher(code);

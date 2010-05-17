@@ -9,15 +9,25 @@ import android.os.Bundle;
 import com.sunlightlabs.android.congress.utils.Utils;
 import com.sunlightlabs.congress.java.CongressException;
 import com.sunlightlabs.congress.java.Legislator;
+import com.sunlightlabs.congress.java.service.ApplicationFacade;
+import com.sunlightlabs.congress.java.service.LegislatorService;
 
 public class LegislatorLoader extends Activity {
 	private LoadLegislatorTask loadLegislatorTask = null;
 	
+	private LegislatorService legislatorService = ApplicationFacade.defaultLegislatorService;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
+		Bundle extras = getIntent().getExtras();
+		if (extras.containsKey("legislatorService")) {
+			Object service = extras.get("legislatorService");
+			if (service instanceof LegislatorService)
+				legislatorService = (LegislatorService) service;
+		}
+
 		Utils.setupSunlight(this);
 		
 		String legislator_id = getIntent().getStringExtra("legislator_id");
@@ -65,7 +75,7 @@ public class LegislatorLoader extends Activity {
     	@Override
     	protected Legislator doInBackground(String... ids) {
     		try {
-				return Legislator.find(ids[0]);
+				return legislatorService.find(ids[0]);
 			} catch(CongressException exception) {
 				return null;
 			}

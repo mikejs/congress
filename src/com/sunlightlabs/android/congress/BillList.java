@@ -22,6 +22,8 @@ import android.widget.TextView;
 import com.sunlightlabs.android.congress.utils.Utils;
 import com.sunlightlabs.congress.java.Bill;
 import com.sunlightlabs.congress.java.CongressException;
+import com.sunlightlabs.congress.java.service.ApplicationFacade;
+import com.sunlightlabs.congress.java.service.BillService;
 
 public class BillList extends ListActivity {
 	private static final int BILLS = 20;
@@ -37,6 +39,8 @@ public class BillList extends ListActivity {
 	private String sponsor_id, sponsor_name;
 	private int type;
 
+	private BillService billService = ApplicationFacade.defaultBillService;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -49,6 +53,12 @@ public class BillList extends ListActivity {
 		sponsor_id = extras.getString("sponsor_id");
 		sponsor_name = extras.getString("sponsor_name");
 		
+		if (extras.containsKey("billService")) {
+			Object service = extras.get("billService");
+			if (service instanceof BillService)
+				billService = (BillService) service;
+		}
+
 		setupControls();
 
 		MainActivityHolder holder = (MainActivityHolder) getLastNonConfigurationInstance();
@@ -118,7 +128,7 @@ public class BillList extends ListActivity {
 				this.bills.remove(lastIndex);
 			}
 		}
-		
+
 		this.bills.addAll(bills);
 
 		// if we got back a full page of bills, there may be more yet to come
@@ -152,13 +162,13 @@ public class BillList extends ListActivity {
 
 				switch (context.type) {
 				case BILLS_RECENT:
-					return Bill.recentlyIntroduced(BILLS, page);
+					return billService.recentlyIntroduced(BILLS, page);
 				case BILLS_LAW:
-					return Bill.recentLaws(BILLS, page);
+					return billService.recentLaws(BILLS, page);
 				case BILLS_LATEST_VOTES:
-					return Bill.latestVotes(BILLS, page);
+					return billService.latestVotes(BILLS, page);
 				case BILLS_SPONSOR:
-					return Bill.recentlySponsored(BILLS, context.sponsor_id, page);
+					return billService.recentlySponsored(BILLS, context.sponsor_id, page);
 				default:
 					throw new CongressException("Not sure what type of bills to find.");
 				}
@@ -200,6 +210,7 @@ public class BillList extends ListActivity {
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			Bill bill = getItem(position);
+
 			if (bill == null)
 				return getLoadMoreView();
 			else
@@ -209,6 +220,7 @@ public class BillList extends ListActivity {
 		private View getLoadMoreView() {
 			BillList.this.loadBills();
 			return inflater.inflate(R.layout.loading, null);
+
 		}
 
 		private View getBillView(Bill bill, View convertView) {
