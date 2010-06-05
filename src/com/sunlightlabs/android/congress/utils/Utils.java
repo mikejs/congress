@@ -19,7 +19,7 @@ import com.sunlightlabs.android.congress.RollInfo;
 import com.sunlightlabs.congress.java.Bill;
 import com.sunlightlabs.congress.java.CongressException;
 import com.sunlightlabs.congress.java.Drumbone;
-import com.sunlightlabs.congress.java.Legislator;
+import com.sunlightlabs.fiftystates.Legislator;
 import com.sunlightlabs.congress.java.Sunlight;
 
 public class Utils {
@@ -61,24 +61,24 @@ public class Utils {
 	// Suitable for a direct link to a legislator, bypassing the LegislatorLoader entirely
 	public static Intent legislatorIntent(Context context, Legislator legislator) {
 		return new Intent(context, LegislatorTabs.class)
-		.putExtra("id", legislator.bioguide_id)
-		.putExtra("titledName", legislator.titledName())
+		.putExtra("id", legislator.id)
+		.putExtra("titledName", "")
 		.putExtra("lastName", legislator.last_name)
 		.putExtra("firstName", legislator.first_name)
-		.putExtra("nickname", legislator.nickname)
-		.putExtra("nameSuffix", legislator.name_suffix)
-		.putExtra("title", legislator.title)
-		.putExtra("state", legislator.state)
-		.putExtra("party", legislator.party)
-		.putExtra("gender", legislator.gender)
-		.putExtra("domain", legislator.getDomain())
-		.putExtra("office", legislator.congress_office)
-		.putExtra("website", legislator.website)
-		.putExtra("phone", legislator.phone)
-		.putExtra("twitter_id", legislator.twitter_id)
-		.putExtra("youtube_id", legislator.youtubeUsername())
-		.putExtra("bioguide_id", legislator.bioguide_id)
-		.putExtra("govtrack_id", legislator.govtrack_id);
+		.putExtra("nickname", "")
+		.putExtra("nameSuffix", "")
+		.putExtra("title", "Rep")
+		.putExtra("state", legislator.getActiveRole().state)
+		.putExtra("party", legislator.getActiveRole().party)
+		.putExtra("gender", "male")
+		.putExtra("domain", "")
+		.putExtra("office", "")
+		.putExtra("website", "")
+		.putExtra("phone", "")
+		.putExtra("twitter_id", "")
+		.putExtra("youtube_id", "")
+		.putExtra("bioguide_id", "")
+		.putExtra("govtrack_id", "");
 	}
 
 	// Suitable for going from a list to the bill display page.
@@ -87,7 +87,7 @@ public class Utils {
 
 	// so tedious that I want a method to load up an Intent for any class
 	public static Intent billIntent(Context context, Bill bill) {
-		Legislator sponsor = bill.sponsor;
+		com.sunlightlabs.congress.java.Legislator sponsor = bill.sponsor;
 		Intent intent = new Intent(context, BillTabs.class)
 		.putExtra("id", bill.id)
 		.putExtra("type", bill.type)
@@ -170,7 +170,7 @@ public class Utils {
 	}
 
 	public static Intent shortcutIntent(Context context, Legislator legislator, Bitmap icon) {
-		return shortcutIntent(context, legislator.bioguide_id, legislator.last_name, icon);
+		return shortcutIntent(context, legislator.id, legislator.last_name, icon);
 	}
 
 	public static Intent shortcutIntent(Context context, String legislatorId, String name, Bitmap icon) {

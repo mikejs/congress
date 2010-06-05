@@ -8,7 +8,8 @@ import android.os.Bundle;
 
 import com.sunlightlabs.android.congress.utils.Utils;
 import com.sunlightlabs.congress.java.CongressException;
-import com.sunlightlabs.congress.java.Legislator;
+import com.sunlightlabs.fiftystates.FiftystatesException;
+import com.sunlightlabs.fiftystates.Legislator;
 
 public class LegislatorLoader extends Activity {
 	private LoadLegislatorTask loadLegislatorTask = null;
@@ -65,7 +66,7 @@ public class LegislatorLoader extends Activity {
     	protected Legislator doInBackground(String... ids) {
     		try {
 				return Legislator.find(ids[0]);
-			} catch(CongressException exception) {
+			} catch(FiftystatesException exception) {
 				return null;
 			}
     	}

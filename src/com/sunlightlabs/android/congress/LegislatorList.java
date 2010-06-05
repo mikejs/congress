@@ -39,7 +39,10 @@ import com.sunlightlabs.android.congress.utils.AddressUpdater.AddressUpdateable;
 import com.sunlightlabs.android.congress.utils.LocationUpdater.LocationUpdateable;
 import com.sunlightlabs.congress.java.Committee;
 import com.sunlightlabs.congress.java.CongressException;
-import com.sunlightlabs.congress.java.Legislator;
+//import com.sunlightlabs.congress.java.Legislator;
+import com.sunlightlabs.fiftystates.FiftystatesException;
+import com.sunlightlabs.fiftystates.Legislator;
+import com.sunlightlabs.fiftystates.State;
 
 public class LegislatorList extends ListActivity implements LoadPhotoTask.LoadsPhoto, LocationUpdateable<LegislatorList>, AddressUpdateable<LegislatorList> {
 	private final static int SEARCH_ZIP = 0;
@@ -316,18 +319,18 @@ public class LegislatorList extends ListActivity implements LoadPhotoTask.LoadsP
 				view = (LinearLayout) convertView;
 
 			// used as the hook to get the legislator image in place when it's loaded
-			view.setTag(legislator.bioguide_id);
+			view.setTag(legislator.id);
 
 			((TextView) view.findViewById(R.id.name)).setText(nameFor(legislator));
 			((TextView) view.findViewById(R.id.position)).setText(positionFor(legislator));
 
 			ImageView photoView = (ImageView) view.findViewById(R.id.photo); 
-			BitmapDrawable photo = LegislatorImage.quickGetImage(LegislatorImage.PIC_MEDIUM, legislator.bioguide_id, context);
+			BitmapDrawable photo = LegislatorImage.quickGetImage(LegislatorImage.PIC_MEDIUM, legislator.id, context);
 			if (photo != null)
 				photoView.setImageDrawable(photo);
 			else {
 				photoView.setImageResource(R.drawable.loading_photo);
-				LegislatorList.this.loadPhoto(legislator.bioguide_id);
+				LegislatorList.this.loadPhoto(legislator.id);
 			}
 
 			return view;
@@ -336,27 +339,24 @@ public class LegislatorList extends ListActivity implements LoadPhotoTask.LoadsP
 
 
 		public String nameFor(Legislator legislator) {
-			return legislator.last_name + ", " + legislator.firstName();
+			return legislator.last_name + ", " + legislator.first_name;
 		}
 
 		public String positionFor(Legislator legislator) {
-			String district = legislator.district;
-			String stateName = Utils.stateCodeToName(context, legislator.state);			
 			String position = "";
-
-			if (district.equals("Senior Seat"))
-				position = "Senior Senator from " + stateName;
-			else if (district.equals("Junior Seat"))
-				position = "Junior Senator from " + stateName;
-			else if (district.equals("0")) {
-				if (legislator.title.equals("Rep"))
-					position = "Representative for " + stateName + " At-Large";
-				else
-					position = legislator.fullTitle() + " for " + stateName;
-			} else
-				position = "Representative for " + stateName + "-" + district;
+			Legislator.Role role = legislator.getActiveRole();
 			
-			return "(" + legislator.party + ") " + position; 
+			if(role.chamber.equals("upper")) {
+				position = "Senator for ";
+			} else {
+				position = "Representative for ";
+			}
+			
+			if (role.party != null && role.party.length() > 0) {
+				position = "(" + role.party + ") " + position;
+			}
+			
+			return position + role.state.toUpperCase() + "-" + role.district;
 		}
 
 	}
@@ -385,7 +385,7 @@ public class LegislatorList extends ListActivity implements LoadPhotoTask.LoadsP
 
 		@Override
 		protected Bitmap doInBackground(Void... nothing) {
-			return LegislatorImage.shortcutImage(legislator.bioguide_id, context);
+			return LegislatorImage.shortcutImage(legislator.id, context);
 		}
 
 		@Override
@@ -434,20 +434,9 @@ public class LegislatorList extends ListActivity implements LoadPhotoTask.LoadsP
 			ArrayList<Legislator> temp;
 			try {
 				switch (searchType()) {
-				case SEARCH_ZIP:
-					temp = Legislator.allForZipCode(zipCode);
-					break;
-				case SEARCH_LOCATION:
-					temp = Legislator.allForLatLong(latitude, longitude);
-					break;
-				case SEARCH_LASTNAME:
-					temp = Legislator.allWhere("lastname__istartswith", lastName);
-					break;
-				case SEARCH_COMMITTEE:
-					temp = Committee.find(committeeId).members;
-					break;
 				case SEARCH_STATE:
-					temp = Legislator.allWhere("state", state);
+					State s = State.find(state);
+					temp = Legislator.allForState(state, s.sessions.get(0).name);
 					break;
 				default:
 					return legislators;
@@ -455,7 +444,7 @@ public class LegislatorList extends ListActivity implements LoadPhotoTask.LoadsP
 
 				// sort legislators Senators-first
 				for (int i = 0; i < temp.size(); i++) {
-					if (temp.get(i).title.equals("Sen"))
+					if (temp.get(i).getActiveRole().chamber.equals("upper"))
 						legislators.add(temp.get(i));
 					else
 						lower.add(temp.get(i));
@@ -466,7 +455,7 @@ public class LegislatorList extends ListActivity implements LoadPhotoTask.LoadsP
 
 				return legislators;
 
-			} catch (CongressException exception) {
+			} catch (FiftystatesException exception) {
 				return legislators;
 			}
 		}
