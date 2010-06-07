@@ -19,6 +19,7 @@ import com.sunlightlabs.android.congress.RollInfo;
 import com.sunlightlabs.congress.java.Bill;
 import com.sunlightlabs.congress.java.CongressException;
 import com.sunlightlabs.congress.java.Drumbone;
+import com.sunlightlabs.fiftystates.Fiftystates;
 import com.sunlightlabs.fiftystates.Legislator;
 import com.sunlightlabs.congress.java.Sunlight;
 
@@ -35,6 +36,8 @@ public class Utils {
 		Resources resources = context.getResources();
 		Sunlight.apiKey = resources.getString(R.string.sunlight_api_key);
 		Sunlight.appVersion = resources.getString(R.string.app_version);
+		Fiftystates.baseUrl = resources.getString(R.string.fiftystates_base_url);
+		Fiftystates.apiKey = resources.getString(R.string.sunlight_api_key);
 	}
 
 	public static void alert(Context context, String msg) {
