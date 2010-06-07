@@ -436,7 +436,7 @@ public class LegislatorList extends ListActivity implements LoadPhotoTask.LoadsP
 				switch (searchType()) {
 				case SEARCH_STATE:
 					State s = State.find(state);
-					temp = Legislator.allForState(state, s.sessions.get(0).name);
+					temp = Legislator.allForState(state, s.getActiveSessionName());
 					break;
 				default:
 					return legislators;
@@ -456,6 +456,7 @@ public class LegislatorList extends ListActivity implements LoadPhotoTask.LoadsP
 				return legislators;
 
 			} catch (FiftystatesException exception) {
+				Log.w(TAG, exception.getMessage());
 				return legislators;
 			}
 		}
